@@ -6,8 +6,12 @@ import io.github.sinri.keel.logger.event.KeelEventLog;
 import io.github.sinri.keel.logger.issue.center.KeelIssueRecordCenter;
 import io.github.sinri.keel.logger.issue.recorder.KeelIssueRecorder;
 import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 
 
 /**
@@ -24,7 +28,9 @@ import javax.annotation.Nonnull;
  *
  * @since 4.1.1
  */
-public abstract class KeelJUnit5Test implements KeelJUnit5TestCore {
+@ExtendWith(VertxExtension.class)
+public abstract class KeelJUnit5Test {
+    @Nonnull
     private final KeelIssueRecorder<KeelEventLog> unitTestLogger;
 
     /**
@@ -33,9 +39,21 @@ public abstract class KeelJUnit5Test implements KeelJUnit5TestCore {
     public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
         KeelBase.setVertx(vertx);
-        KeelBase.getConfiguration().loadPropertiesFile("config.properties");
-
+        this.loadLocalConfig();
         this.unitTestLogger = buildUnitTestLogger();
+    }
+
+    protected void loadLocalConfig() {
+        try {
+            KeelBase.getConfiguration().loadPropertiesFile("config.properties");
+        } catch (IOException e) {
+            System.err.println("Failed to load config.properties: " + e.getMessage());
+        }
+    }
+
+    @Nonnull
+    protected final Vertx getVertx() {
+        return KeelBase.getVertx();
     }
 
     @Nonnull
@@ -43,8 +61,10 @@ public abstract class KeelJUnit5Test implements KeelJUnit5TestCore {
         return KeelIssueRecordCenter.outputCenter().generateIssueRecorder("KeelJUnit5Test", KeelEventLog::new);
     }
 
-    @Override
+    @Nonnull
     public final KeelIssueRecorder<KeelEventLog> getUnitTestLogger() {
         return unitTestLogger;
     }
+
+    abstract protected void test(VertxTestContext testContext);
 }
