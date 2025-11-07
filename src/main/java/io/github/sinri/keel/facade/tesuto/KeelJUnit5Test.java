@@ -1,5 +1,6 @@
-package io.github.sinri.keel.facade.tesuto.unit;
+package io.github.sinri.keel.facade.tesuto;
 
+import io.github.sinri.keel.base.KeelBase;
 import io.github.sinri.keel.core.json.JsonifiableSerializer;
 import io.github.sinri.keel.logger.event.KeelEventLog;
 import io.github.sinri.keel.logger.issue.center.KeelIssueRecordCenter;
@@ -8,7 +9,6 @@ import io.vertx.core.Vertx;
 
 import javax.annotation.Nonnull;
 
-import static io.github.sinri.keel.facade.KeelInstance.Keel;
 
 /**
  * The base class for Vertx-JUnit5 unit test classes.
@@ -31,11 +31,9 @@ public abstract class KeelJUnit5Test implements KeelJUnit5TestCore {
      * The constructor would run after {@code @BeforeAll} annotated method.
      */
     public KeelJUnit5Test(Vertx vertx) {
-        // System.out.println("KeelJUnit5Test constructor with vertx " + vertx);
-
         JsonifiableSerializer.register();
-        Keel.initializeVertx(vertx);
-        Keel.getConfiguration().loadPropertiesFile("config.properties");
+        KeelBase.setVertx(vertx);
+        KeelBase.getConfiguration().loadPropertiesFile("config.properties");
 
         this.unitTestLogger = buildUnitTestLogger();
     }
