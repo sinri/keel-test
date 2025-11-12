@@ -1,10 +1,8 @@
 package io.github.sinri.keel.facade.tesuto;
 
-import io.github.sinri.keel.base.KeelBase;
 import io.github.sinri.keel.core.json.JsonifiableSerializer;
-import io.github.sinri.keel.logger.event.KeelEventLog;
-import io.github.sinri.keel.logger.issue.center.KeelIssueRecordCenter;
-import io.github.sinri.keel.logger.issue.recorder.KeelIssueRecorder;
+import io.github.sinri.keel.logger.api.event.EventRecorder;
+import io.github.sinri.keel.logger.base.factory.BaseRecorderFactory;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -12,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+
+import static io.github.sinri.keel.facade.KeelInstance.Keel;
 
 
 /**
@@ -31,38 +31,38 @@ import java.io.IOException;
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test {
     @Nonnull
-    private final KeelIssueRecorder<KeelEventLog> unitTestLogger;
+    private final EventRecorder unitTestLogger;
 
     /**
      * The constructor would run after {@code @BeforeAll} annotated method.
      */
     public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
-        KeelBase.setVertx(vertx);
-        this.loadLocalConfig();
+        Keel.initializeVertx(vertx);
+        try {
+            this.loadLocalConfig();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         this.unitTestLogger = buildUnitTestLogger();
     }
 
-    protected void loadLocalConfig() {
-        try {
-            KeelBase.getConfiguration().loadPropertiesFile("config.properties");
-        } catch (IOException e) {
-            System.err.println("Failed to load config.properties: " + e.getMessage());
-        }
+    protected void loadLocalConfig() throws IOException {
+        Keel.getConfiguration().loadPropertiesFile("config.properties");
     }
 
     @Nonnull
     protected final Vertx getVertx() {
-        return KeelBase.getVertx();
+        return Keel.getVertx();
     }
 
     @Nonnull
-    protected KeelIssueRecorder<KeelEventLog> buildUnitTestLogger() {
-        return KeelIssueRecordCenter.outputCenter().generateIssueRecorder("KeelJUnit5Test", KeelEventLog::new);
+    protected EventRecorder buildUnitTestLogger() {
+        return BaseRecorderFactory.getInstance().createEventRecorder("KeelJUnit5Test");
     }
 
     @Nonnull
-    public final KeelIssueRecorder<KeelEventLog> getUnitTestLogger() {
+    public final EventRecorder getUnitTestLogger() {
         return unitTestLogger;
     }
 
