@@ -1,11 +1,12 @@
-package io.github.sinri.keel.facade.tesuto;
+package io.github.sinri.keel.tesuto;
 
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Test;
 
-import static io.github.sinri.keel.facade.KeelInstance.Keel;
+import static io.github.sinri.keel.base.KeelInstance.Keel;
+
 
 public class SampleTest extends KeelJUnit5Test {
     /**

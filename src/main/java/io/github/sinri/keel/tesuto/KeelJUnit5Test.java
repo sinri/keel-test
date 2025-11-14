@@ -1,17 +1,17 @@
-package io.github.sinri.keel.facade.tesuto;
+package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.core.json.JsonifiableSerializer;
+import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.logger.api.event.EventRecorder;
-import io.github.sinri.keel.logger.base.factory.BaseRecorderFactory;
+import io.github.sinri.keel.logger.api.factory.BaseRecorderFactory;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 
-import static io.github.sinri.keel.facade.KeelInstance.Keel;
+import static io.github.sinri.keel.base.KeelInstance.Keel;
 
 
 /**
@@ -30,7 +30,7 @@ import static io.github.sinri.keel.facade.KeelInstance.Keel;
  */
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test {
-    @Nonnull
+    @NotNull
     private final EventRecorder unitTestLogger;
 
     /**
@@ -48,20 +48,23 @@ public abstract class KeelJUnit5Test {
     }
 
     protected void loadLocalConfig() throws IOException {
-        Keel.getConfiguration().loadPropertiesFile("config.properties");
+        try {
+            Keel.getConfiguration().loadPropertiesFile("config.properties");
+        } catch (IOException ignored) {
+        }
     }
 
-    @Nonnull
+    @NotNull
     protected final Vertx getVertx() {
         return Keel.getVertx();
     }
 
-    @Nonnull
+    @NotNull
     protected EventRecorder buildUnitTestLogger() {
         return BaseRecorderFactory.getInstance().createEventRecorder("KeelJUnit5Test");
     }
 
-    @Nonnull
+    @NotNull
     public final EventRecorder getUnitTestLogger() {
         return unitTestLogger;
     }
