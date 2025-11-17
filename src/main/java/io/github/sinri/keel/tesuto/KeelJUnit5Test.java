@@ -1,8 +1,8 @@
 package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
-import io.github.sinri.keel.logger.api.event.EventRecorder;
-import io.github.sinri.keel.logger.api.factory.BaseRecorderFactory;
+import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
+import io.github.sinri.keel.logger.api.logger.Logger;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -31,7 +31,7 @@ import static io.github.sinri.keel.base.KeelInstance.Keel;
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test {
     @NotNull
-    private final EventRecorder unitTestLogger;
+    private final Logger unitTestLogger;
 
     /**
      * The constructor would run after {@code @BeforeAll} annotated method.
@@ -60,12 +60,12 @@ public abstract class KeelJUnit5Test {
     }
 
     @NotNull
-    protected EventRecorder buildUnitTestLogger() {
-        return BaseRecorderFactory.getInstance().createEventRecorder("KeelJUnit5Test");
+    protected Logger buildUnitTestLogger() {
+        return StdoutLoggerFactory.getInstance().createLogger("KeelJUnit5Test");
     }
 
     @NotNull
-    public final EventRecorder getUnitTestLogger() {
+    public final Logger getUnitTestLogger() {
         return unitTestLogger;
     }
 

@@ -6,7 +6,7 @@
 
     <groupId>io.github.sinri</groupId>
     <artifactId>keel-test</artifactId>
-    <version>5.0.0-rc.1</version>
+    <version>5.0.0-rc.2</version>
 
     <name>Keel-Test</name>
     <description>
@@ -184,8 +184,8 @@
     <dependencies>
         <dependency>
             <groupId>io.github.sinri</groupId>
-            <artifactId>keel-logger</artifactId>
-            <version>5.0.0-rc.1</version>
+            <artifactId>keel-base</artifactId>
+            <version>5.0.0-rc.6</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
