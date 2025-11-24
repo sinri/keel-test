@@ -8,7 +8,6 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
@@ -35,6 +34,9 @@ public abstract class KeelJUnit5Test {
     /**
      * 构造方法。
      * <p>本方法在 {@code @BeforeAll} 注解的静态方法运行后运行。
+     * <p>注意，本构造方法会注册 {@link JsonifiableSerializer} 所载 JSON 序列化能力。
+     *
+     * @param vertx 由 VertxExtension 提供的 Vertx 实例。
      */
     public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
@@ -51,6 +53,8 @@ public abstract class KeelJUnit5Test {
      * 加载执行测试必要的本地配置。
      * <p>
      * 默认加载 config.properties 文件内容到 Keel 的配置中，可用 {@link KeelInstance#getConfiguration()} 获取。
+     * <p>
+     * 如果你无需加载本地配置或需要特殊实现，可以重写此方法。
      *
      * @throws Exception 加载配置过程中出现的异常，如配置文件不存在等情况。
      */
@@ -62,28 +66,45 @@ public abstract class KeelJUnit5Test {
         }
     }
 
+    /**
+     * 获取本类运行时的 Vertx 实例；其通过构造函数注册在 Keel 中。
+     *
+     * @return 本类运行时的 Vertx 实例
+     */
     @NotNull
     protected final Vertx getVertx() {
         return Keel.getVertx();
     }
 
+    /**
+     * 为这个单元测试类构建 Logger 实例。
+     * <p>
+     * 仅设计在测试类的构造函数中调用。
+     *
+     * @return Logger 实例
+     */
     @NotNull
     protected Logger buildUnitTestLogger() {
         return StdoutLoggerFactory.getInstance().createLogger("KeelJUnit5Test");
     }
 
+    /**
+     * 获取构造函数中通过{@link KeelJUnit5Test#buildUnitTestLogger()}方法构建的 Logger 实例。
+     *
+     * @return 本类通用的 Logger 实例。
+     */
     @NotNull
     public final Logger getUnitTestLogger() {
         return unitTestLogger;
     }
 
-    /**
-     * 默认提供测试方法。在实现中，需要加上{@link Test}注解。
-     * <p>
-     * 提供了方法参数{@code testContext}，类型为{@link VertxTestContext}，用于异步测试的结束回调。
-     *
-     * @param testContext 测试上下文，用于等待异步操作的结果
-     */
-    @Test
-    abstract protected void test(VertxTestContext testContext);
+    //    /**
+    //     * 默认提供测试方法。在实现中，需要加上{@link Test}注解。
+    //     * <p>
+    //     * 提供了方法参数{@code testContext}，类型为{@link VertxTestContext}，用于异步测试的结束回调。
+    //     *
+    //     * @param testContext 测试上下文，用于等待异步操作的结果
+    //     */
+    //    @Test
+    //    abstract protected void test(VertxTestContext testContext);
 }

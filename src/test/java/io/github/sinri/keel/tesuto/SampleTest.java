@@ -17,7 +17,6 @@ public class SampleTest extends KeelJUnit5Test {
     }
 
     @Test
-    @Override
     protected void test(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint();
 
