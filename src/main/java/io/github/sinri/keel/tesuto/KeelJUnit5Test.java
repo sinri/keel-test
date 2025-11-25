@@ -12,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 
-import static io.github.sinri.keel.base.KeelInstance.Keel;
-
 
 /**
  * Vertx JUnit5 单元测试的基类。
@@ -28,6 +26,7 @@ import static io.github.sinri.keel.base.KeelInstance.Keel;
  */
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test {
+    protected static final KeelInstance Keel = KeelInstance.Keel;
     @NotNull
     private final Logger unitTestLogger;
 
