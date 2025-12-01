@@ -1,8 +1,10 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.KeelInstance;
+import io.github.sinri.keel.base.Keel;
+import io.github.sinri.keel.base.configuration.ConfigTree;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
+import io.github.sinri.keel.logger.api.factory.LoggerFactory;
 import io.github.sinri.keel.logger.api.logger.Logger;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
@@ -25,10 +27,15 @@ import java.io.IOException;
  * @since 5.0.0
  */
 @ExtendWith(VertxExtension.class)
-public abstract class KeelJUnit5Test {
-    protected static final KeelInstance Keel = KeelInstance.Keel;
+public abstract class KeelJUnit5Test implements Keel {
     @NotNull
     private final Logger unitTestLogger;
+    @NotNull
+    private final Vertx vertx;
+    @NotNull
+    private final ConfigTree configTree;
+    @NotNull
+    private LoggerFactory loggerFactory;
 
     /**
      * 构造方法。
@@ -37,21 +44,23 @@ public abstract class KeelJUnit5Test {
      *
      * @param vertx 由 VertxExtension 提供的 Vertx 实例。
      */
-    public KeelJUnit5Test(Vertx vertx) {
+    public KeelJUnit5Test(@NotNull Vertx vertx) {
         JsonifiableSerializer.register();
-        Keel.initializeVertx(vertx);
+        this.vertx = vertx;
+        this.configTree = new ConfigTree();
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        this.loggerFactory = buildLoggerFactory();
         this.unitTestLogger = buildUnitTestLogger();
     }
 
     /**
      * 加载执行测试必要的本地配置。
      * <p>
-     * 默认加载 config.properties 文件内容到 Keel 的配置中，可用 {@link KeelInstance#getConfiguration()} 获取。
+     * 默认加载 config.properties 文件内容到 Keel 的配置中，可用 {@link Keel#getConfiguration()} 获取。
      * <p>
      * 如果你无需加载本地配置或需要特殊实现，可以重写此方法。
      *
@@ -59,10 +68,30 @@ public abstract class KeelJUnit5Test {
      */
     protected void loadLocalConfig() throws Exception {
         try {
-            Keel.getConfiguration().loadPropertiesFile("config.properties");
+            configTree.loadPropertiesFile("config.properties");
         } catch (IOException ioException) {
             throw new Exception("Failed to load config.properties", ioException);
         }
+    }
+
+    @Override
+    public final @NotNull ConfigTree getConfiguration() {
+        return configTree;
+    }
+
+    @Override
+    public final @NotNull LoggerFactory getLoggerFactory() {
+        return loggerFactory;
+    }
+
+    @Override
+    public final void setLoggerFactory(@NotNull LoggerFactory loggerFactory) {
+        this.loggerFactory = loggerFactory;
+    }
+
+    @NotNull
+    public LoggerFactory buildLoggerFactory() {
+        return StdoutLoggerFactory.getInstance();
     }
 
     /**
@@ -71,8 +100,8 @@ public abstract class KeelJUnit5Test {
      * @return 本类运行时的 Vertx 实例
      */
     @NotNull
-    protected final Vertx getVertx() {
-        return Keel.getVertx();
+    public final Vertx getVertx() {
+        return vertx;
     }
 
     /**
@@ -84,7 +113,7 @@ public abstract class KeelJUnit5Test {
      */
     @NotNull
     protected Logger buildUnitTestLogger() {
-        return StdoutLoggerFactory.getInstance().createLogger("KeelJUnit5Test");
+        return getLoggerFactory().createLogger(getClass().getName());
     }
 
     /**

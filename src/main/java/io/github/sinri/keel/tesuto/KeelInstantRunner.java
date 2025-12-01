@@ -1,21 +1,27 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.KeelInstance;
+import io.github.sinri.keel.base.Keel;
+import io.github.sinri.keel.base.configuration.ConfigTree;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
+import io.github.sinri.keel.base.verticles.AbstractKeelVerticle;
+import io.github.sinri.keel.base.verticles.KeelVerticle;
 import io.github.sinri.keel.logger.api.LogLevel;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
 import io.github.sinri.keel.logger.api.logger.Logger;
-import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 即时运行类，一个快速可执行程序基础实现类。
@@ -24,14 +30,22 @@ import java.util.concurrent.CountDownLatch;
  *
  * @since 5.0.0
  */
-public abstract class KeelInstantRunner {
-    protected static final KeelInstance Keel = KeelInstance.Keel;
-
-    private CountDownLatch countDownLatch;
+public abstract class KeelInstantRunner implements Keel {
+    @NotNull
+    private final ConfigTree configTree;
+    @Nullable
+    private Vertx vertx;
+    // private CountDownLatch countDownLatch;
+    @Nullable
     private LoggerFactory loggerFactory;
+    @Nullable
     private Logger logger;
 
-    public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, InterruptedException {
+    protected KeelInstantRunner() {
+        this.configTree = new ConfigTree();
+    }
+
+    public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         // 获取调用此 main 方法的类名；采用新的 JDK 9+ 标准实现途径，弃用非标准的系统属性 sun.java.command 实现途径。
         ProcessHandle.Info info = ProcessHandle.current().info();
         Optional<String[]> arguments = info.arguments();
@@ -46,20 +60,22 @@ public abstract class KeelInstantRunner {
         // 获取无参构造函数并创建实例
         Constructor<?> constructor = aClass.getConstructor();
         KeelInstantRunner testInstance = (KeelInstantRunner) constructor.newInstance();
-
-        testInstance.countDownLatch = new CountDownLatch(1);
-
         testInstance.launch(args);
-
-        testInstance.countDownLatch.await();
     }
 
+    @Nullable
     private static String extractClassFromArgs(String[] full, String[] tail) {
         //  1. 统计数组 tail 的长度，记为 L；
         int L = tail == null ? 0 : tail.length;
         //  2. 从数组 full 中找出倒数第 L+1 个元素返回
         if (full == null || full.length < L + 1) return null;
         return full[full.length - L - 1];
+    }
+
+    @Override
+    public @NotNull
+    final Vertx getVertx() {
+        return Objects.requireNonNull(vertx);
     }
 
     /**
@@ -69,16 +85,23 @@ public abstract class KeelInstantRunner {
      *
      * @return 本类实例中应用的{@link LoggerFactory}实例。
      */
+    @NotNull
     protected LoggerFactory buildLoggerFactory() {
         return StdoutLoggerFactory.getInstance();
     }
 
-    public final LoggerFactory getLoggerFactory() {
-        return loggerFactory;
+    public final @NotNull LoggerFactory getLoggerFactory() {
+        return Objects.requireNonNull(loggerFactory);
     }
 
+    @Override
+    public final void setLoggerFactory(@NotNull LoggerFactory loggerFactory) {
+        this.loggerFactory = loggerFactory;
+    }
+
+    @NotNull
     public final Logger getLogger() {
-        return logger;
+        return Objects.requireNonNull(logger);
     }
 
     @NotNull
@@ -87,14 +110,15 @@ public abstract class KeelInstantRunner {
     }
 
     protected void loadLocalConfiguration() throws IOException {
-        Keel.getConfiguration().loadPropertiesFile("config.properties");
+        configTree.loadPropertiesFile("config.properties");
     }
 
+    @NotNull
     protected LogLevel buildVisibleLogLevel() {
         return LogLevel.DEBUG;
     }
 
-    public void launch(String[] args) {
+    public final void launch(String[] args) {
         try {
             this.loadLocalConfiguration();
         } catch (IOException e) {
@@ -102,40 +126,47 @@ public abstract class KeelInstantRunner {
         }
 
         VertxOptions vertxOptions = this.buildVertxOptions();
-        Keel.initializeVertxStandalone(vertxOptions);
-
+        this.vertx = Vertx.builder().with(vertxOptions).build();
         this.loggerFactory = this.buildLoggerFactory();
         this.logger = this.loggerFactory.createLogger(getClass().getName());
         this.logger.visibleLevel(buildVisibleLogLevel());
 
-        countDownLatch = new CountDownLatch(1);
+        var countDownLatch = new CountDownLatch(1);
 
         Future.succeededFuture()
               .compose(v -> {
                   return this.beforeRun();
               })
               .compose(v -> {
-                  AbstractVerticle verticle = new AbstractVerticle() {
+                  KeelVerticle verticle = new AbstractKeelVerticle(this) {
                       @Override
-                      public void start() throws Exception {
-                          run()
-                                  .eventually(() -> {
-                                      return afterRun();
-                                  })
-                                  .onComplete(ar -> {
-                                      if (ar.failed()) {
-                                          getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
-                                      } else {
-                                          getLogger().debug("RUN SUCCESSFULLY");
-                                      }
-                                      Keel.getVertx().undeploy(deploymentID())
-                                          .onComplete(undeployResult -> {
-                                              countDownLatch.countDown();
-                                          });
-                                  });
+                      protected @NotNull Future<Void> startVerticle() {
+                          Future<Void> runFuture;
+                          try {
+                              runFuture = run();
+                          } catch (Exception e) {
+                              return Future.failedFuture(e);
+                          }
+
+                          runFuture.eventually(() -> {
+                                       return afterRun();
+                                   })
+                                   .onComplete(ar -> {
+                                       if (ar.failed()) {
+                                           getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
+                                       } else {
+                                           getLogger().debug("RUN SUCCESSFULLY");
+                                       }
+                                       getVertx().undeploy(deploymentID())
+                                                 .onComplete(undeployResult -> {
+                                                     countDownLatch.countDown();
+                                                 });
+                                   });
+
+                          return Future.succeededFuture();
                       }
                   };
-                  return Keel.getVertx().deployVerticle(verticle, buildDeploymentOptions());
+                  return verticle.deployMe(buildDeploymentOptions());
               })
               .onSuccess(id -> {
                   getLogger().debug("Deployed verticle with id: " + id);
@@ -145,19 +176,19 @@ public abstract class KeelInstantRunner {
                   countDownLatch.countDown();
               });
 
+        AtomicInteger returnCode = new AtomicInteger(0);
         try {
             getLogger().debug("Waiting for count down latch...");
             countDownLatch.await();
             getLogger().debug("Count down latch reached.");
         } catch (InterruptedException e) {
             getLogger().fatal(log -> log.message("CountDownLatch Interrupted!").exception(e));
-            System.exit(1);
+            returnCode.set(1);
         } finally {
-            Keel.close()
-                .onComplete(over -> {
-                    getLogger().debug("All done.");
-                    System.exit(0);
-                });
+            close().onComplete(over -> {
+                getLogger().debug("Closed Keel and vertx.");
+                System.exit(returnCode.get());
+            });
         }
     }
 
@@ -166,6 +197,7 @@ public abstract class KeelInstantRunner {
      *
      * @return 准备完成
      */
+    @NotNull
     protected Future<Void> beforeRun() {
         getLogger().debug("beforeRun...");
         return Future.succeededFuture();
@@ -174,6 +206,7 @@ public abstract class KeelInstantRunner {
     /**
      * 正式逻辑会以 Verticle 形式运行，在此方法构建部署时所需的{@link DeploymentOptions}。
      */
+    @NotNull
     protected DeploymentOptions buildDeploymentOptions() {
         return new DeploymentOptions();
     }
@@ -184,6 +217,7 @@ public abstract class KeelInstantRunner {
      * @return 正式逻辑运行完成时的异步结果
      * @throws Exception 可能抛出的异常
      */
+    @NotNull
     abstract protected Future<Void> run() throws Exception;
 
     /**
@@ -191,8 +225,14 @@ public abstract class KeelInstantRunner {
      *
      * @return 清理完成
      */
+    @NotNull
     protected Future<Void> afterRun() {
         getLogger().debug("afterRun...");
         return Future.succeededFuture();
+    }
+
+    @Override
+    public final @NotNull ConfigTree getConfiguration() {
+        return configTree;
     }
 }
