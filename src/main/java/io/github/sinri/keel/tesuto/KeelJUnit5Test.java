@@ -35,7 +35,7 @@ public abstract class KeelJUnit5Test implements Keel {
     @NotNull
     private final ConfigTree configTree;
     @NotNull
-    private LoggerFactory loggerFactory;
+    private final LoggerFactory loggerFactory;
 
     /**
      * 构造方法。
@@ -82,11 +82,6 @@ public abstract class KeelJUnit5Test implements Keel {
     @Override
     public final @NotNull LoggerFactory getLoggerFactory() {
         return loggerFactory;
-    }
-
-    @Override
-    public final void setLoggerFactory(@NotNull LoggerFactory loggerFactory) {
-        this.loggerFactory = loggerFactory;
     }
 
     @NotNull

@@ -35,7 +35,6 @@ public abstract class KeelInstantRunner implements Keel {
     private final ConfigTree configTree;
     @Nullable
     private Vertx vertx;
-    // private CountDownLatch countDownLatch;
     @Nullable
     private LoggerFactory loggerFactory;
     @Nullable
@@ -92,11 +91,6 @@ public abstract class KeelInstantRunner implements Keel {
 
     public final @NotNull LoggerFactory getLoggerFactory() {
         return Objects.requireNonNull(loggerFactory);
-    }
-
-    @Override
-    public final void setLoggerFactory(@NotNull LoggerFactory loggerFactory) {
-        this.loggerFactory = loggerFactory;
     }
 
     @NotNull
