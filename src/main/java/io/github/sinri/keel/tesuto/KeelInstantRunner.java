@@ -1,6 +1,7 @@
 package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.Keel;
+import io.github.sinri.keel.base.KeelHolder;
 import io.github.sinri.keel.base.configuration.ConfigTree;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.base.verticles.AbstractKeelVerticle;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @since 5.0.0
  */
-public abstract class KeelInstantRunner implements Keel {
+public abstract class KeelInstantRunner implements Keel, KeelHolder {
     @NotNull
     private final ConfigTree configTree;
     @Nullable
@@ -72,8 +73,14 @@ public abstract class KeelInstantRunner implements Keel {
     }
 
     @Override
-    public @NotNull
-    final Vertx getVertx() {
+    @NotNull
+    public final Keel getKeel() {
+        return this;
+    }
+
+    @Override
+    @NotNull
+    public final Vertx getVertx() {
         return Objects.requireNonNull(vertx);
     }
 
