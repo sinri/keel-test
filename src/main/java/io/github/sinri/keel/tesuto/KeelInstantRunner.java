@@ -170,10 +170,11 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
                   return verticle.deployMe(buildDeploymentOptions());
               })
               .onSuccess(id -> {
-                  getLogger().debug("Deployed verticle with id: " + id);
+                  getLogger().debug("Deployed verticle " + getClass().getName() + " as id: " + id);
               })
               .onFailure(t -> {
-                  getLogger().fatal(log -> log.message("Deploy failed").exception(t));
+                  getLogger().fatal(log -> log.message("Deployed verticle " + getClass().getName() + " failed")
+                                              .exception(t));
                   countDownLatch.countDown();
               });
 
