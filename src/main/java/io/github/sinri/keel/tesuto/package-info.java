@@ -1,4 +1,4 @@
 /**
- * Keel Tesuto Package for JUnit-5-Based Unit Testing
+ * 这个包包含了 Keel 框架的测试工具类。
  */
 package io.github.sinri.keel.tesuto;
