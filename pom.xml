@@ -6,8 +6,8 @@
 
     <groupId>io.github.sinri</groupId>
     <artifactId>keel-test</artifactId>
-    <version>5.0.0-rc.19</version>
-    <!--        <version>5.0.0-SNAPSHOT</version>-->
+    <version>5.0.0-rc.20</version>
+    <!-- <version>5.0.0-SNAPSHOT</version> -->
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -19,8 +19,8 @@
         <mavenSurefirePluginVersion>3.5.4</mavenSurefirePluginVersion>
         <mavenGpgPluginVersion>3.2.8</mavenGpgPluginVersion>
         <nexusStagingMavenPluginVersion>1.7.0</nexusStagingMavenPluginVersion>
-        <vertxVersion>5.0.5</vertxVersion>
-        <keelBaseVersion>5.0.0-rc.24</keelBaseVersion>
+        <vertxVersion>5.0.6</vertxVersion>
+        <keelBaseVersion>5.0.0-rc.25</keelBaseVersion>
     </properties>
 
     <name>Keel-Test</name>
