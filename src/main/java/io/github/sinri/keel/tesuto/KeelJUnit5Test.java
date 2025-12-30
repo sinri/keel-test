@@ -28,14 +28,11 @@ import java.io.IOException;
  */
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test implements Keel {
-    @NotNull
-    private final Logger unitTestLogger;
-    @NotNull
-    private final Vertx vertx;
-    @NotNull
-    private final ConfigTree configTree;
-    @NotNull
-    private final LoggerFactory loggerFactory;
+
+    private final @NotNull Logger unitTestLogger;
+    private final @NotNull Vertx vertx;
+    private final @NotNull ConfigTree configTree;
+    private final @NotNull LoggerFactory loggerFactory;
 
     /**
      * 构造方法。
@@ -47,7 +44,7 @@ public abstract class KeelJUnit5Test implements Keel {
     public KeelJUnit5Test(@NotNull Vertx vertx) {
         JsonifiableSerializer.register();
         this.vertx = vertx;
-        this.configTree = new ConfigTree();
+        this.configTree = ConfigTree.create();
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
@@ -84,8 +81,7 @@ public abstract class KeelJUnit5Test implements Keel {
         return loggerFactory;
     }
 
-    @NotNull
-    public LoggerFactory buildLoggerFactory() {
+    public @NotNull LoggerFactory buildLoggerFactory() {
         return StdoutLoggerFactory.getInstance();
     }
 
@@ -94,8 +90,7 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @return 本类运行时的 Vertx 实例
      */
-    @NotNull
-    public final Vertx getVertx() {
+    public final @NotNull Vertx getVertx() {
         return vertx;
     }
 
@@ -106,8 +101,7 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @return Logger 实例
      */
-    @NotNull
-    protected Logger buildUnitTestLogger() {
+    protected @NotNull Logger buildUnitTestLogger() {
         return getLoggerFactory().createLogger(getClass().getName());
     }
 
@@ -116,8 +110,7 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @return 本类通用的 Logger 实例。
      */
-    @NotNull
-    public final Logger getUnitTestLogger() {
+    public final @NotNull Logger getUnitTestLogger() {
         return unitTestLogger;
     }
 

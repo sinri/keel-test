@@ -2,6 +2,7 @@ package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.Keel;
 import io.github.sinri.keel.base.KeelHolder;
+import io.github.sinri.keel.base.configuration.ConfigNode;
 import io.github.sinri.keel.base.configuration.ConfigTree;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.base.verticles.AbstractKeelVerticle;
@@ -32,17 +33,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0.0
  */
 public abstract class KeelInstantRunner implements Keel, KeelHolder {
-    @NotNull
-    private final ConfigTree configTree;
-    @Nullable
-    private Vertx vertx;
-    @Nullable
-    private LoggerFactory loggerFactory;
-    @Nullable
-    private Logger logger;
+
+    private final @NotNull ConfigTree configTree;
+    private @Nullable Vertx vertx;
+    private @Nullable LoggerFactory loggerFactory;
+    private @Nullable Logger logger;
 
     protected KeelInstantRunner() {
-        this.configTree = new ConfigTree();
+        this.configTree = ConfigTree.wrap(ConfigNode.create(""));
     }
 
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -63,8 +61,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
         testInstance.launch(args);
     }
 
-    @Nullable
-    private static String extractClassFromArgs(String[] full, String[] tail) {
+    private static @Nullable String extractClassFromArgs(String[] full, String[] tail) {
         //  1. 统计数组 tail 的长度，记为 L；
         int L = tail == null ? 0 : tail.length;
         //  2. 从数组 full 中找出倒数第 L+1 个元素返回
@@ -73,14 +70,12 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
     }
 
     @Override
-    @NotNull
-    public final Keel getKeel() {
+    public final @NotNull Keel getKeel() {
         return this;
     }
 
     @Override
-    @NotNull
-    public final Vertx getVertx() {
+    public final @NotNull Vertx getVertx() {
         return Objects.requireNonNull(vertx);
     }
 
@@ -91,8 +86,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      *
      * @return 本类实例中应用的{@link LoggerFactory}实例。
      */
-    @NotNull
-    protected LoggerFactory buildLoggerFactory() {
+    protected @NotNull LoggerFactory buildLoggerFactory() {
         return StdoutLoggerFactory.getInstance();
     }
 
@@ -100,13 +94,11 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
         return Objects.requireNonNull(loggerFactory);
     }
 
-    @NotNull
-    public final Logger getLogger() {
+    public final @NotNull Logger getLogger() {
         return Objects.requireNonNull(logger);
     }
 
-    @NotNull
-    public VertxOptions buildVertxOptions() {
+    public @NotNull VertxOptions buildVertxOptions() {
         return new VertxOptions();
     }
 
@@ -114,8 +106,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
         configTree.loadPropertiesFile("config.properties");
     }
 
-    @NotNull
-    protected LogLevel buildVisibleLogLevel() {
+    protected @NotNull LogLevel buildVisibleLogLevel() {
         return LogLevel.DEBUG;
     }
 
@@ -199,8 +190,8 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      *
      * @return 准备完成
      */
-    @NotNull
-    protected Future<Void> beforeRun() {
+
+    protected @NotNull Future<Void> beforeRun() {
         getLogger().debug("beforeRun...");
         return Future.succeededFuture();
     }
@@ -208,8 +199,8 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
     /**
      * 正式逻辑会以 Verticle 形式运行，在此方法构建部署时所需的{@link DeploymentOptions}。
      */
-    @NotNull
-    protected DeploymentOptions buildDeploymentOptions() {
+
+    protected @NotNull DeploymentOptions buildDeploymentOptions() {
         return new DeploymentOptions();
     }
 
@@ -219,16 +210,14 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      * @return 正式逻辑运行完成时的异步结果
      * @throws Exception 可能抛出的异常
      */
-    @NotNull
-    abstract protected Future<Void> run() throws Exception;
+    abstract protected @NotNull Future<Void> run() throws Exception;
 
     /**
      * 运行正式逻辑之后，做一些清理工作。
      *
      * @return 清理完成
      */
-    @NotNull
-    protected Future<Void> afterRun() {
+    protected @NotNull Future<Void> afterRun() {
         getLogger().debug("afterRun...");
         return Future.succeededFuture();
     }

@@ -15,7 +15,7 @@ public class SampleTest extends KeelJUnit5Test {
     }
 
     @Test
-    protected void test(VertxTestContext testContext) {
+    void test(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint();
 
         getUnitTestLogger().info("Test started!");
