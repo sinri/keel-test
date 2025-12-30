@@ -19,6 +19,9 @@ val developerEmail: String by project
 val developerOrganization: String by project
 val developerOrganizationUrl: String by project
 
+val vertxVersion: String by project
+val keelBaseVersion: String by project
+
 repositories {
     // Internal Nexus repository for dependencies
     maven {
@@ -40,10 +43,10 @@ dependencies {
     api("org.jetbrains:annotations:26.0.1")
 
     // Main dependency from pom.xml
-    api("io.github.sinri:keel-base:5.0.0-rc.27")
+    api("io.github.sinri:keel-base:$keelBaseVersion")
 
     // Test dependencies
-    api("io.vertx:vertx-junit5:5.0.6")
+    api("io.vertx:vertx-junit5:$vertxVersion")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
