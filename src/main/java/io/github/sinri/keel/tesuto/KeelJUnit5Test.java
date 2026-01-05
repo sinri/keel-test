@@ -1,7 +1,7 @@
 package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.Keel;
-import io.github.sinri.keel.base.configuration.ConfigTree;
+import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
@@ -9,7 +9,7 @@ import io.github.sinri.keel.logger.api.logger.Logger;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
@@ -26,13 +26,14 @@ import java.io.IOException;
  *
  * @since 5.0.0
  */
+@NullMarked
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test implements Keel {
 
-    private final @NotNull Logger unitTestLogger;
-    private final @NotNull Vertx vertx;
-    private final @NotNull ConfigTree configTree;
-    private final @NotNull LoggerFactory loggerFactory;
+    private final Logger unitTestLogger;
+    private final Vertx vertx;
+    private final ConfigElement configElement;
+    private final LoggerFactory loggerFactory;
 
     /**
      * 构造方法。
@@ -41,10 +42,10 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @param vertx 由 VertxExtension 提供的 Vertx 实例。
      */
-    public KeelJUnit5Test(@NotNull Vertx vertx) {
+    public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
         this.vertx = vertx;
-        this.configTree = ConfigTree.create();
+        this.configElement = new ConfigElement("");
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
@@ -65,23 +66,23 @@ public abstract class KeelJUnit5Test implements Keel {
      */
     protected void loadLocalConfig() throws Exception {
         try {
-            configTree.loadPropertiesFile("config.properties");
+            configElement.loadPropertiesFile("config.properties");
         } catch (IOException ioException) {
             throw new Exception("Failed to load config.properties", ioException);
         }
     }
 
     @Override
-    public final @NotNull ConfigTree getConfiguration() {
-        return configTree;
+    public final ConfigElement getConfiguration() {
+        return configElement;
     }
 
     @Override
-    public final @NotNull LoggerFactory getLoggerFactory() {
+    public final LoggerFactory getLoggerFactory() {
         return loggerFactory;
     }
 
-    public @NotNull LoggerFactory buildLoggerFactory() {
+    public LoggerFactory buildLoggerFactory() {
         return StdoutLoggerFactory.getInstance();
     }
 
@@ -90,7 +91,7 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @return 本类运行时的 Vertx 实例
      */
-    public final @NotNull Vertx getVertx() {
+    public final Vertx getVertx() {
         return vertx;
     }
 
@@ -101,7 +102,7 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @return Logger 实例
      */
-    protected @NotNull Logger buildUnitTestLogger() {
+    protected Logger buildUnitTestLogger() {
         return getLoggerFactory().createLogger(getClass().getName());
     }
 
@@ -110,7 +111,7 @@ public abstract class KeelJUnit5Test implements Keel {
      *
      * @return 本类通用的 Logger 实例。
      */
-    public final @NotNull Logger getUnitTestLogger() {
+    public final Logger getUnitTestLogger() {
         return unitTestLogger;
     }
 

@@ -1,12 +1,12 @@
 package io.github.sinri.keel.tesuto;
 
 import io.vertx.core.Future;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
-
+@NullMarked
 public class InstantSuccessTest extends KeelInstantRunner {
     @Override
-    protected @NotNull Future<Void> run() {
+    protected Future<Void> run() {
         getLogger().info("GO");
         return asyncCallStepwise(3, i -> {
             getLogger().info("STEP " + i);

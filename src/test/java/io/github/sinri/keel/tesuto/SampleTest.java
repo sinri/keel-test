@@ -3,9 +3,10 @@ package io.github.sinri.keel.tesuto;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxTestContext;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
-
+@NullMarked
 public class SampleTest extends KeelJUnit5Test {
     /**
      * The constructor would run after {@code @BeforeAll} annotated method.

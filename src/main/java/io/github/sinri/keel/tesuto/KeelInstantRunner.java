@@ -2,8 +2,7 @@ package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.Keel;
 import io.github.sinri.keel.base.KeelHolder;
-import io.github.sinri.keel.base.configuration.ConfigNode;
-import io.github.sinri.keel.base.configuration.ConfigTree;
+import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.base.verticles.AbstractKeelVerticle;
 import io.github.sinri.keel.base.verticles.KeelVerticle;
@@ -14,8 +13,8 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -32,15 +31,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @since 5.0.0
  */
+@NullMarked
 public abstract class KeelInstantRunner implements Keel, KeelHolder {
 
-    private final @NotNull ConfigTree configTree;
+    private final ConfigElement configElement;
     private @Nullable Vertx vertx;
     private @Nullable LoggerFactory loggerFactory;
     private @Nullable Logger logger;
 
     protected KeelInstantRunner() {
-        this.configTree = ConfigTree.wrap(ConfigNode.create(""));
+        this.configElement = new ConfigElement("");
     }
 
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -63,19 +63,19 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
 
     private static @Nullable String extractClassFromArgs(String[] full, String[] tail) {
         //  1. 统计数组 tail 的长度，记为 L；
-        int L = tail == null ? 0 : tail.length;
+        int L = tail.length;
         //  2. 从数组 full 中找出倒数第 L+1 个元素返回
-        if (full == null || full.length < L + 1) return null;
+        if (full.length < L + 1) return null;
         return full[full.length - L - 1];
     }
 
     @Override
-    public final @NotNull Keel getKeel() {
+    public final Keel getKeel() {
         return this;
     }
 
     @Override
-    public final @NotNull Vertx getVertx() {
+    public final Vertx getVertx() {
         return Objects.requireNonNull(vertx);
     }
 
@@ -86,27 +86,27 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      *
      * @return 本类实例中应用的{@link LoggerFactory}实例。
      */
-    protected @NotNull LoggerFactory buildLoggerFactory() {
+    protected LoggerFactory buildLoggerFactory() {
         return StdoutLoggerFactory.getInstance();
     }
 
-    public final @NotNull LoggerFactory getLoggerFactory() {
+    public final LoggerFactory getLoggerFactory() {
         return Objects.requireNonNull(loggerFactory);
     }
 
-    public final @NotNull Logger getLogger() {
+    public final Logger getLogger() {
         return Objects.requireNonNull(logger);
     }
 
-    public @NotNull VertxOptions buildVertxOptions() {
+    public VertxOptions buildVertxOptions() {
         return new VertxOptions();
     }
 
     protected void loadLocalConfiguration() throws IOException {
-        configTree.loadPropertiesFile("config.properties");
+        configElement.loadPropertiesFile("config.properties");
     }
 
-    protected @NotNull LogLevel buildVisibleLogLevel() {
+    protected LogLevel buildVisibleLogLevel() {
         return LogLevel.DEBUG;
     }
 
@@ -132,7 +132,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
               .compose(v -> {
                   KeelVerticle verticle = new AbstractKeelVerticle(this) {
                       @Override
-                      protected @NotNull Future<Void> startVerticle() {
+                      protected Future<Void> startVerticle() {
                           Future<Void> runFuture;
                           try {
                               runFuture = run();
@@ -191,7 +191,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      * @return 准备完成
      */
 
-    protected @NotNull Future<Void> beforeRun() {
+    protected Future<Void> beforeRun() {
         getLogger().debug("beforeRun...");
         return Future.succeededFuture();
     }
@@ -200,7 +200,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      * 正式逻辑会以 Verticle 形式运行，在此方法构建部署时所需的{@link DeploymentOptions}。
      */
 
-    protected @NotNull DeploymentOptions buildDeploymentOptions() {
+    protected DeploymentOptions buildDeploymentOptions() {
         return new DeploymentOptions();
     }
 
@@ -210,20 +210,20 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
      * @return 正式逻辑运行完成时的异步结果
      * @throws Exception 可能抛出的异常
      */
-    abstract protected @NotNull Future<Void> run() throws Exception;
+    abstract protected Future<Void> run() throws Exception;
 
     /**
      * 运行正式逻辑之后，做一些清理工作。
      *
      * @return 清理完成
      */
-    protected @NotNull Future<Void> afterRun() {
+    protected Future<Void> afterRun() {
         getLogger().debug("afterRun...");
         return Future.succeededFuture();
     }
 
     @Override
-    public final @NotNull ConfigTree getConfiguration() {
-        return configTree;
+    public final ConfigElement getConfiguration() {
+        return configElement;
     }
 }
