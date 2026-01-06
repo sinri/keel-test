@@ -1,7 +1,6 @@
 package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.Keel;
-import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
@@ -32,8 +31,6 @@ public abstract class KeelJUnit5Test implements Keel {
 
     private final Logger unitTestLogger;
     private final Vertx vertx;
-    private final ConfigElement configElement;
-    private final LoggerFactory loggerFactory;
 
     /**
      * 构造方法。
@@ -45,13 +42,12 @@ public abstract class KeelJUnit5Test implements Keel {
     public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
         this.vertx = vertx;
-        this.configElement = new ConfigElement("");
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        this.loggerFactory = buildLoggerFactory();
+        SHARED_LOGGER_FACTORY_REF.set(buildLoggerFactory());
         this.unitTestLogger = buildUnitTestLogger();
     }
 
@@ -66,20 +62,10 @@ public abstract class KeelJUnit5Test implements Keel {
      */
     protected void loadLocalConfig() throws Exception {
         try {
-            configElement.loadPropertiesFile("config.properties");
+            getConfiguration().loadPropertiesFile("config.properties");
         } catch (IOException ioException) {
             throw new Exception("Failed to load config.properties", ioException);
         }
-    }
-
-    @Override
-    public final ConfigElement getConfiguration() {
-        return configElement;
-    }
-
-    @Override
-    public final LoggerFactory getLoggerFactory() {
-        return loggerFactory;
     }
 
     public LoggerFactory buildLoggerFactory() {

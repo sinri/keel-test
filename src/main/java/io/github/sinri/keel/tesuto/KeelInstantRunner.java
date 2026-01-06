@@ -1,11 +1,9 @@
 package io.github.sinri.keel.tesuto;
 
 import io.github.sinri.keel.base.Keel;
-import io.github.sinri.keel.base.KeelHolder;
-import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
-import io.github.sinri.keel.base.verticles.AbstractKeelVerticle;
-import io.github.sinri.keel.base.verticles.KeelVerticle;
+import io.github.sinri.keel.base.verticles.KeelVerticleBase;
+import io.github.sinri.keel.logger.api.LateObject;
 import io.github.sinri.keel.logger.api.LogLevel;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
 import io.github.sinri.keel.logger.api.logger.Logger;
@@ -32,15 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0.0
  */
 @NullMarked
-public abstract class KeelInstantRunner implements Keel, KeelHolder {
+public abstract class KeelInstantRunner implements Keel {
 
-    private final ConfigElement configElement;
-    private @Nullable Vertx vertx;
-    private @Nullable LoggerFactory loggerFactory;
+    private final LateObject<Vertx> lateVertx = new LateObject<>();
     private @Nullable Logger logger;
 
     protected KeelInstantRunner() {
-        this.configElement = new ConfigElement("");
+
     }
 
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -70,13 +66,8 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
     }
 
     @Override
-    public final Keel getKeel() {
-        return this;
-    }
-
-    @Override
     public final Vertx getVertx() {
-        return Objects.requireNonNull(vertx);
+        return lateVertx.get();
     }
 
     /**
@@ -90,10 +81,6 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
         return StdoutLoggerFactory.getInstance();
     }
 
-    public final LoggerFactory getLoggerFactory() {
-        return Objects.requireNonNull(loggerFactory);
-    }
-
     public final Logger getLogger() {
         return Objects.requireNonNull(logger);
     }
@@ -103,7 +90,7 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
     }
 
     protected void loadLocalConfiguration() throws IOException {
-        configElement.loadPropertiesFile("config.properties");
+        getConfiguration().loadPropertiesFile("config.properties");
     }
 
     protected LogLevel buildVisibleLogLevel() {
@@ -118,9 +105,11 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
         }
 
         VertxOptions vertxOptions = this.buildVertxOptions();
-        this.vertx = Vertx.builder().with(vertxOptions).build();
-        this.loggerFactory = this.buildLoggerFactory();
-        this.logger = this.loggerFactory.createLogger(getClass().getName());
+        Vertx vertx = Vertx.builder().with(vertxOptions).build();
+        lateVertx.set(vertx);
+
+        Keel.SHARED_LOGGER_FACTORY_REF.set(this.buildLoggerFactory());
+        this.logger = this.getLoggerFactory().createLogger(getClass().getName());
         this.logger.visibleLevel(buildVisibleLogLevel());
 
         var countDownLatch = new CountDownLatch(1);
@@ -130,35 +119,32 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
                   return this.beforeRun();
               })
               .compose(v -> {
-                  KeelVerticle verticle = new AbstractKeelVerticle(this) {
-                      @Override
-                      protected Future<Void> startVerticle() {
-                          Future<Void> runFuture;
-                          try {
-                              runFuture = run();
-                          } catch (Exception e) {
-                              return Future.failedFuture(e);
-                          }
-
-                          runFuture.eventually(() -> {
-                                       return afterRun();
-                                   })
-                                   .onComplete(ar -> {
-                                       if (ar.failed()) {
-                                           getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
-                                       } else {
-                                           getLogger().debug("RUN SUCCESSFULLY");
-                                       }
-                                       getVertx().undeploy(deploymentID())
-                                                 .onComplete(undeployResult -> {
-                                                     countDownLatch.countDown();
-                                                 });
-                                   });
-
-                          return Future.succeededFuture();
+                  KeelVerticleBase verticle = KeelVerticleBase.wrap(keelVerticleBase -> {
+                      Future<Void> runFuture;
+                      try {
+                          runFuture = run();
+                      } catch (Exception e) {
+                          return Future.failedFuture(e);
                       }
-                  };
-                  return verticle.deployMe(buildDeploymentOptions());
+
+                      runFuture.eventually(() -> {
+                                   return afterRun();
+                               })
+                               .onComplete(ar -> {
+                                   if (ar.failed()) {
+                                       getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
+                                   } else {
+                                       getLogger().debug("RUN SUCCESSFULLY");
+                                   }
+                                   getVertx().undeploy(keelVerticleBase.deploymentID())
+                                             .onComplete(undeployResult -> {
+                                                 countDownLatch.countDown();
+                                             });
+                               });
+
+                      return Future.succeededFuture();
+                  });
+                  return verticle.deployMe(getVertx(), buildDeploymentOptions());
               })
               .onSuccess(id -> {
                   getLogger().debug("Deployed verticle " + getClass().getName() + " as id: " + id);
@@ -220,10 +206,5 @@ public abstract class KeelInstantRunner implements Keel, KeelHolder {
     protected Future<Void> afterRun() {
         getLogger().debug("afterRun...");
         return Future.succeededFuture();
-    }
-
-    @Override
-    public final ConfigElement getConfiguration() {
-        return configElement;
     }
 }
