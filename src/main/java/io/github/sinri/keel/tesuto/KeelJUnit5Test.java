@@ -1,6 +1,7 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.Keel;
+import io.github.sinri.keel.base.async.KeelAsyncMixin;
+import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
@@ -27,7 +28,7 @@ import java.io.IOException;
  */
 @NullMarked
 @ExtendWith(VertxExtension.class)
-public abstract class KeelJUnit5Test implements Keel {
+public abstract class KeelJUnit5Test implements KeelAsyncMixin {
 
     private final Logger unitTestLogger;
     private final Vertx vertx;
@@ -47,14 +48,14 @@ public abstract class KeelJUnit5Test implements Keel {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        SHARED_LOGGER_FACTORY_REF.set(buildLoggerFactory());
+        LoggerFactory.replaceShared(buildLoggerFactory());
         this.unitTestLogger = buildUnitTestLogger();
     }
 
     /**
      * 加载执行测试必要的本地配置。
      * <p>
-     * 默认加载 config.properties 文件内容到 Keel 的配置中，可用 {@link Keel#getConfiguration()} 获取。
+     * 默认加载 config.properties 文件内容到 Keel 的配置中，可用 {@link ConfigElement#root()} 获取。
      * <p>
      * 如果你无需加载本地配置或需要特殊实现，可以重写此方法。
      *
@@ -62,7 +63,7 @@ public abstract class KeelJUnit5Test implements Keel {
      */
     protected void loadLocalConfig() throws Exception {
         try {
-            getConfiguration().loadPropertiesFile("config.properties");
+            ConfigElement.root().loadPropertiesFile("config.properties");
         } catch (IOException ioException) {
             throw new Exception("Failed to load config.properties", ioException);
         }
@@ -89,7 +90,7 @@ public abstract class KeelJUnit5Test implements Keel {
      * @return Logger 实例
      */
     protected Logger buildUnitTestLogger() {
-        return getLoggerFactory().createLogger(getClass().getName());
+        return LoggerFactory.getShared().createLogger(getClass().getName());
     }
 
     /**

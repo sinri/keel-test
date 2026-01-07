@@ -1,6 +1,7 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.Keel;
+import io.github.sinri.keel.base.async.KeelAsyncMixin;
+import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.base.verticles.KeelVerticleBase;
 import io.github.sinri.keel.logger.api.LateObject;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0.0
  */
 @NullMarked
-public abstract class KeelInstantRunner implements Keel {
+public abstract class KeelInstantRunner implements KeelAsyncMixin {
 
     private final LateObject<Vertx> lateVertx = new LateObject<>();
     private @Nullable Logger logger;
@@ -90,7 +91,7 @@ public abstract class KeelInstantRunner implements Keel {
     }
 
     protected void loadLocalConfiguration() throws IOException {
-        getConfiguration().loadPropertiesFile("config.properties");
+        ConfigElement.root().loadPropertiesFile("config.properties");
     }
 
     protected LogLevel buildVisibleLogLevel() {
@@ -108,8 +109,8 @@ public abstract class KeelInstantRunner implements Keel {
         Vertx vertx = Vertx.builder().with(vertxOptions).build();
         lateVertx.set(vertx);
 
-        Keel.SHARED_LOGGER_FACTORY_REF.set(this.buildLoggerFactory());
-        this.logger = this.getLoggerFactory().createLogger(getClass().getName());
+        LoggerFactory.replaceShared(this.buildLoggerFactory());
+        this.logger = LoggerFactory.getShared().createLogger(getClass().getName());
         this.logger.visibleLevel(buildVisibleLogLevel());
 
         var countDownLatch = new CountDownLatch(1);
@@ -164,7 +165,7 @@ public abstract class KeelInstantRunner implements Keel {
             getLogger().fatal(log -> log.message("CountDownLatch Interrupted!").exception(e));
             returnCode.set(1);
         } finally {
-            close().onComplete(over -> {
+            getVertx().close().onComplete(over -> {
                 getLogger().debug("Closed Keel and vertx.");
                 System.exit(returnCode.get());
             });
