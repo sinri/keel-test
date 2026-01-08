@@ -18,7 +18,6 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class KeelInstantRunner implements KeelAsyncMixin {
 
     private final LateObject<Vertx> lateVertx = new LateObject<>();
-    private @Nullable Logger logger;
+    private final LateObject<Logger> lateLogger = new LateObject<>();
 
     protected KeelInstantRunner() {
 
@@ -83,7 +82,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
     }
 
     public final Logger getLogger() {
-        return Objects.requireNonNull(logger);
+        return lateLogger.get();
     }
 
     public VertxOptions buildVertxOptions() {
@@ -110,8 +109,8 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
         lateVertx.set(vertx);
 
         LoggerFactory.replaceShared(this.buildLoggerFactory());
-        this.logger = LoggerFactory.getShared().createLogger(getClass().getName());
-        this.logger.visibleLevel(buildVisibleLogLevel());
+        lateLogger.set(LoggerFactory.getShared().createLogger(getClass().getName()));
+        this.getLogger().visibleLevel(buildVisibleLogLevel());
 
         var countDownLatch = new CountDownLatch(1);
 
