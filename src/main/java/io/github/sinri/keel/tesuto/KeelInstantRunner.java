@@ -18,6 +18,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +35,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
 
     private final LateObject<Vertx> lateVertx = new LateObject<>();
     private final LateObject<Logger> lateLogger = new LateObject<>();
+    private final LateObject<List<String>> lateArgs = new LateObject<>();
 
     protected KeelInstantRunner() {
 
@@ -97,7 +99,13 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
         return LogLevel.DEBUG;
     }
 
+    public final List<String> getArgs() {
+        return lateArgs.get();
+    }
+
     public final void launch(String[] args) {
+        lateArgs.set(List.of(args));
+
         try {
             this.loadLocalConfiguration();
         } catch (IOException e) {
