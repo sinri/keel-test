@@ -1,6 +1,6 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.SharedVertxHolder;
+import io.github.sinri.keel.base.SharedVertxStorage;
 import io.github.sinri.keel.base.async.KeelAsyncMixin;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
@@ -32,8 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0.0
  */
 @NullMarked
-public abstract class KeelInstantRunner implements KeelAsyncMixin, SharedVertxHolder {
-    private final VertxInitializerImpl vertxInitializer = new VertxInitializerImpl();
+public abstract class KeelInstantRunner implements KeelAsyncMixin {
     private final LateObject<Logger> lateLogger = new LateObject<>();
     private final LateObject<List<String>> lateArgs = new LateObject<>();
 
@@ -69,7 +68,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin, SharedVertxHo
 
     @Override
     public final Vertx getVertx() {
-        return vertxInitializer.getVertx();
+        return SharedVertxStorage.get();
     }
 
     /**
@@ -114,7 +113,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin, SharedVertxHo
 
         VertxOptions vertxOptions = this.buildVertxOptions();
         Vertx vertx = Vertx.builder().with(vertxOptions).build();
-        vertxInitializer.initializeVertx(vertx);
+        SharedVertxStorage.set(vertx);
 
         LoggerFactory.replaceShared(this.buildLoggerFactory());
         lateLogger.set(LoggerFactory.getShared().createLogger(getClass().getName()));

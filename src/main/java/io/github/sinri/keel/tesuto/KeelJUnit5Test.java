@@ -1,5 +1,6 @@
 package io.github.sinri.keel.tesuto;
 
+import io.github.sinri.keel.base.SharedVertxStorage;
 import io.github.sinri.keel.base.async.KeelAsyncMixin;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
@@ -29,7 +30,6 @@ import java.io.IOException;
 @NullMarked
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test implements KeelAsyncMixin {
-    private final VertxInitializerImpl vertxInitializer = new VertxInitializerImpl();
     private final Logger unitTestLogger;
 
     /**
@@ -41,7 +41,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      */
     public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
-        this.vertxInitializer.initializeVertx(vertx);
+        SharedVertxStorage.forceSet(vertx);
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
@@ -78,7 +78,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      * @return 本类运行时的 Vertx 实例
      */
     public final Vertx getVertx() {
-        return vertxInitializer.getVertx();
+        return SharedVertxStorage.get();
     }
 
     /**
