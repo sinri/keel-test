@@ -29,9 +29,8 @@ import java.io.IOException;
 @NullMarked
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test implements KeelAsyncMixin {
-
+    private final VertxInitializerImpl vertxInitializer = new VertxInitializerImpl();
     private final Logger unitTestLogger;
-    private final Vertx vertx;
 
     /**
      * 构造方法。
@@ -42,7 +41,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      */
     public KeelJUnit5Test(Vertx vertx) {
         JsonifiableSerializer.register();
-        this.vertx = vertx;
+        this.vertxInitializer.initializeVertx(vertx);
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
@@ -79,7 +78,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      * @return 本类运行时的 Vertx 实例
      */
     public final Vertx getVertx() {
-        return vertx;
+        return vertxInitializer.getVertx();
     }
 
     /**

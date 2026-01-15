@@ -1,5 +1,6 @@
 package io.github.sinri.keel.tesuto;
 
+import io.github.sinri.keel.base.SharedVertxHolder;
 import io.github.sinri.keel.base.async.KeelAsyncMixin;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
@@ -31,9 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0.0
  */
 @NullMarked
-public abstract class KeelInstantRunner implements KeelAsyncMixin {
-
-    private final LateObject<Vertx> lateVertx = new LateObject<>();
+public abstract class KeelInstantRunner implements KeelAsyncMixin, SharedVertxHolder {
+    private final VertxInitializerImpl vertxInitializer = new VertxInitializerImpl();
     private final LateObject<Logger> lateLogger = new LateObject<>();
     private final LateObject<List<String>> lateArgs = new LateObject<>();
 
@@ -69,7 +69,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
 
     @Override
     public final Vertx getVertx() {
-        return lateVertx.get();
+        return vertxInitializer.getVertx();
     }
 
     /**
@@ -114,7 +114,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
 
         VertxOptions vertxOptions = this.buildVertxOptions();
         Vertx vertx = Vertx.builder().with(vertxOptions).build();
-        lateVertx.set(vertx);
+        vertxInitializer.initializeVertx(vertx);
 
         LoggerFactory.replaceShared(this.buildLoggerFactory());
         lateLogger.set(LoggerFactory.getShared().createLogger(getClass().getName()));
@@ -135,9 +135,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
                           return Future.failedFuture(e);
                       }
 
-                      runFuture.eventually(() -> {
-                                   return afterRun();
-                               })
+                      runFuture.eventually(this::afterRun)
                                .onComplete(ar -> {
                                    if (ar.failed()) {
                                        getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
