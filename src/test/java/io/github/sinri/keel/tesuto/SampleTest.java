@@ -12,7 +12,7 @@ public class SampleTest extends KeelJUnit5Test {
      * The constructor would run after {@code @BeforeAll} annotated method.
      */
     public SampleTest(Vertx vertx) {
-        super(vertx);
+        super();
     }
 
     @Test

@@ -1,20 +1,24 @@
-package io.github.sinri.keel.tesuto;
+package io.github.sinri.keel.tesuto.raw;
 
 import io.github.sinri.keel.base.logger.logger.StdoutLogger;
+import io.github.sinri.keel.tesuto.Sample2Test;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.RunTestOnContext;
+import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-@NullMarked
-public class Sample2Test extends KeelJUnit5Test {
-    /**
-     * The constructor would run after {@code @BeforeAll} annotated method.
-     */
-    public Sample2Test() {
+@ExtendWith(VertxExtension.class)
+public class Raw2JunitTest {
+    @RegisterExtension
+    static RunTestOnContext rtoc = new RunTestOnContext();
+
+    public Raw2JunitTest() {
         super();
-        getUnitTestLogger().info("Sample2Test RTOC Vertx: " + rtoc.vertx());
+        System.out.println("Raw2JunitTest Constructor RTOC Vertx: " + rtoc.vertx());
     }
 
     @BeforeAll
@@ -41,24 +45,28 @@ public class Sample2Test extends KeelJUnit5Test {
 
     @BeforeEach
     void beforeEach(
-            // VertxTestContext testContext
+            VertxTestContext testContext
     ) {
-        getUnitTestLogger().info("beforeEach");
+        System.out.println("beforeEach");
         //getUnitTestLogger().info("beforeEach("+testContext+") with field `vertx` "+getVertx());
-        //        getVertx().setTimer(1000L, id -> {
-        //            getUnitTestLogger().info("beforeEach Timer fired!");
-        //            testContext.completeNow();
-        //        });
+        getVertx().setTimer(1000L, id -> {
+            System.out.println("beforeEach Timer fired!");
+            testContext.completeNow();
+        });
+    }
+
+    Vertx getVertx() {
+        return rtoc.vertx();
     }
 
     @Test
     void test1(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint();
 
-        getUnitTestLogger().info("Test1 started with testContext: " + testContext);
+        System.out.println("Test1 started with testContext: " + testContext);
 
-        getVertx().setTimer(2000L, id -> {
-            getUnitTestLogger().info("Timer fired!");
+        getVertx().setTimer(1000L, id -> {
+            System.out.println("Test1 Timer fired!");
             checkpoint.flag();
         });
     }
@@ -67,24 +75,23 @@ public class Sample2Test extends KeelJUnit5Test {
     void test2(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint();
 
-        getUnitTestLogger().info("Test2 started with testContext: " + testContext);
+        System.out.println("Test2 started with testContext: " + testContext);
 
-        getVertx().setTimer(2000L, id -> {
-            getUnitTestLogger().info("Timer fired!");
+        getVertx().setTimer(1000L, id -> {
+            System.out.println("Test2 Timer fired!");
             checkpoint.flag();
         });
     }
 
     @AfterEach
     void afterEach(
-            //VertxTestContext testContext
+            VertxTestContext testContext
     ) {
-        getUnitTestLogger().info("afterEach");
+        System.out.println("afterEach");
         //        getUnitTestLogger().info("afterEach("+testContext+") with field `vertx` "+getVertx());
-        //        getVertx().setTimer(1000L, id -> {
-        //            getUnitTestLogger().info("afterEach Timer fired!");
-        //            testContext.completeNow();
-        //        });
+        getVertx().setTimer(1000L, id -> {
+            System.out.println("afterEach Timer fired!");
+            testContext.completeNow();
+        });
     }
-
 }

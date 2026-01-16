@@ -8,10 +8,12 @@ import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
 import io.github.sinri.keel.logger.api.logger.Logger;
 import io.vertx.core.Vertx;
+import io.vertx.junit5.RunTestOnContext;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
 
@@ -30,18 +32,30 @@ import java.io.IOException;
 @NullMarked
 @ExtendWith(VertxExtension.class)
 public abstract class KeelJUnit5Test implements KeelAsyncMixin {
+    /**
+     * A static instance of {@link RunTestOnContext} registered as a JUnit 5 extension.
+     * <p>
+     * This field is utilized to run test cases within a dedicated Vert.x test context,
+     * simplifying the management of an isolated and thread-safe execution environment
+     * for each test method in subclasses of {@link KeelJUnit5Test}.
+     * <p>
+     * The {@code rtoc} instance provides access to a {@link Vertx} instance,
+     * which is initialized and managed for testing purposes, ensuring that each
+     * test operates with a fresh and consistent Vert.x context.
+     */
+    @RegisterExtension
+    protected final static RunTestOnContext rtoc = new RunTestOnContext();
+
     private final Logger unitTestLogger;
 
     /**
      * 构造方法。
      * <p>本方法在 {@code @BeforeAll} 注解的静态方法运行后运行。
      * <p>注意，本构造方法会注册 {@code JsonifiableSerializer} 所载 JSON 序列化能力。
-     *
-     * @param vertx 由 VertxExtension 提供的 Vertx 实例。
      */
-    public KeelJUnit5Test(Vertx vertx) {
+    public KeelJUnit5Test() {
         JsonifiableSerializer.register();
-        SharedVertxStorage.forceSet(vertx);
+        SharedVertxStorage.ensure(rtoc.vertx());
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
@@ -78,7 +92,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      * @return 本类运行时的 Vertx 实例
      */
     public final Vertx getVertx() {
-        return SharedVertxStorage.get();
+        return rtoc.vertx();
     }
 
     /**
