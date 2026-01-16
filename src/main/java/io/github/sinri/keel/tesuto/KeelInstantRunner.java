@@ -55,7 +55,16 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
         // 获取无参构造函数并创建实例
         Constructor<?> constructor = aClass.getConstructor();
         KeelInstantRunner testInstance = (KeelInstantRunner) constructor.newInstance();
+
+        try {
+            SharedVertxStorage.get();
+        } catch (IllegalStateException e) {
+            System.err.println("in io.github.sinri.keel.tesuto.KeelInstantRunner.main: " + e.getMessage());
+        }
+
         testInstance.launch(args);
+
+
     }
 
     private static @Nullable String extractClassFromArgs(String[] full, String[] tail) {
@@ -109,6 +118,12 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
             this.loadLocalConfiguration();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+
+        try {
+            SharedVertxStorage.get();
+        } catch (IllegalStateException e) {
+            System.err.println("in io.github.sinri.keel.tesuto.KeelInstantRunner.launch: " + e.getMessage());
         }
 
         VertxOptions vertxOptions = this.buildVertxOptions();
