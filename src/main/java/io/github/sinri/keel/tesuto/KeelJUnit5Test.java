@@ -68,7 +68,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
     @BeforeAll
     public static void beforeAll() throws Exception {
         // 需要在 BeforeAll 方法中让 io.vertx.junit5.RunTestOnContext.vertx 完成初始化，这样后续的构造方法 Test 方法
-        System.out.println("io.github.sinri.keel.tesuto.KeelJUnit5Test.beforeAll: io.github.sinri.keel.tesuto.KeelJUnit5Test.rtoc.vertx is " + rtoc.vertx());
+        // System.out.println("io.github.sinri.keel.tesuto.KeelJUnit5Test.beforeAll: io.github.sinri.keel.tesuto.KeelJUnit5Test.rtoc.vertx is " + rtoc.vertx());
         SharedVertxStorage.ensure(rtoc.vertx());
     }
 
