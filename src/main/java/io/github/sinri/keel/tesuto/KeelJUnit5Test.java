@@ -12,6 +12,7 @@ import io.vertx.junit5.RunTestOnContext;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.jspecify.annotations.NullMarked;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -55,7 +56,6 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      */
     public KeelJUnit5Test() {
         JsonifiableSerializer.register();
-        SharedVertxStorage.ensure(rtoc.vertx());
         try {
             this.loadLocalConfig();
         } catch (Exception e) {
@@ -63,6 +63,13 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
         }
         LoggerFactory.replaceShared(buildLoggerFactory());
         this.unitTestLogger = buildUnitTestLogger();
+    }
+
+    @BeforeAll
+    public static void beforeAll() throws Exception {
+        // 需要在 BeforeAll 方法中让 io.vertx.junit5.RunTestOnContext.vertx 完成初始化，这样后续的构造方法 Test 方法
+        System.out.println("io.github.sinri.keel.tesuto.KeelJUnit5Test.beforeAll: io.github.sinri.keel.tesuto.KeelJUnit5Test.rtoc.vertx is " + rtoc.vertx());
+        SharedVertxStorage.ensure(rtoc.vertx());
     }
 
     /**

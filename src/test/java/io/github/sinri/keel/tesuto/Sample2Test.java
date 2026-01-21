@@ -55,7 +55,7 @@ public class Sample2Test extends KeelJUnit5Test {
     void test1(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint();
 
-        getUnitTestLogger().info("Test1 started with testContext: " + testContext);
+        getUnitTestLogger().info("Test1 started with testContext: " + testContext + " and Vertx: " + rtoc.vertx());
 
         getVertx().setTimer(2000L, id -> {
             getUnitTestLogger().info("Timer fired!");
@@ -67,7 +67,7 @@ public class Sample2Test extends KeelJUnit5Test {
     void test2(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint();
 
-        getUnitTestLogger().info("Test2 started with testContext: " + testContext);
+        getUnitTestLogger().info("Test2 started with testContext: " + testContext + " and Vertx: " + rtoc.vertx());
 
         getVertx().setTimer(2000L, id -> {
             getUnitTestLogger().info("Timer fired!");
