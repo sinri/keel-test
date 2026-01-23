@@ -120,12 +120,6 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
             throw new RuntimeException(e);
         }
 
-        try {
-            SharedVertxStorage.get();
-        } catch (IllegalStateException e) {
-            System.err.println("in io.github.sinri.keel.tesuto.KeelInstantRunner.launch: " + e.getMessage());
-        }
-
         VertxOptions vertxOptions = this.buildVertxOptions();
         Vertx vertx = Vertx.builder().with(vertxOptions).build();
         SharedVertxStorage.set(vertx);
