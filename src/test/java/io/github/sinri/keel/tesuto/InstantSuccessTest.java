@@ -8,9 +8,9 @@ public class InstantSuccessTest extends KeelInstantRunner {
     @Override
     protected Future<Void> run() {
         getLogger().info("GO");
-        return asyncCallStepwise(3, i -> {
+        return getKeel().asyncCallStepwise(3, i -> {
             getLogger().info("STEP " + i);
-            return asyncSleep(1000L);
+            return getKeel().asyncSleep(1000L);
         })
                 .compose(v -> {
                     getLogger().info("DONE");

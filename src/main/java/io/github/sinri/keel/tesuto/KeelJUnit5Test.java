@@ -1,7 +1,6 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.SharedVertxStorage;
-import io.github.sinri.keel.base.async.KeelAsyncMixin;
+import io.github.sinri.keel.base.async.Keel;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
@@ -32,7 +31,7 @@ import java.io.IOException;
  */
 @NullMarked
 @ExtendWith(VertxExtension.class)
-public abstract class KeelJUnit5Test implements KeelAsyncMixin {
+public abstract class KeelJUnit5Test {
     /**
      * A static instance of {@link RunTestOnContext} registered as a JUnit 5 extension.
      * <p>
@@ -69,7 +68,7 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
     public static void beforeAll() throws Exception {
         // 需要在 BeforeAll 方法中让 io.vertx.junit5.RunTestOnContext.vertx 完成初始化，这样后续的构造方法 Test 方法
         // System.out.println("io.github.sinri.keel.tesuto.KeelJUnit5Test.beforeAll: io.github.sinri.keel.tesuto.KeelJUnit5Test.rtoc.vertx is " + rtoc.vertx());
-        SharedVertxStorage.ensure(rtoc.vertx());
+        Keel.share(rtoc.vertx());
     }
 
     /**
@@ -98,8 +97,17 @@ public abstract class KeelJUnit5Test implements KeelAsyncMixin {
      *
      * @return 本类运行时的 Vertx 实例
      */
-    public final Vertx getVertx() {
+    protected final Vertx getVertx() {
         return rtoc.vertx();
+    }
+
+    public final Keel getKeel() {
+        Vertx vertx = getVertx();
+        if (vertx instanceof Keel keel) {
+            return Keel.ensureShared(() -> keel);
+        } else {
+            return Keel.ensureShared(() -> Keel.create(vertx));
+        }
     }
 
     /**

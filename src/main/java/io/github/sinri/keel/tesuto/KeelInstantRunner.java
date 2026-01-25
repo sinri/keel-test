@@ -1,7 +1,6 @@
 package io.github.sinri.keel.tesuto;
 
-import io.github.sinri.keel.base.SharedVertxStorage;
-import io.github.sinri.keel.base.async.KeelAsyncMixin;
+import io.github.sinri.keel.base.async.Keel;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
 import io.github.sinri.keel.base.verticles.KeelVerticleBase;
@@ -32,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 5.0.0
  */
 @NullMarked
-public abstract class KeelInstantRunner implements KeelAsyncMixin {
+public abstract class KeelInstantRunner {
     private final LateObject<Logger> lateLogger = new LateObject<>();
     private final LateObject<List<String>> lateArgs = new LateObject<>();
 
@@ -56,15 +55,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
         Constructor<?> constructor = aClass.getConstructor();
         KeelInstantRunner testInstance = (KeelInstantRunner) constructor.newInstance();
 
-        try {
-            SharedVertxStorage.get();
-        } catch (IllegalStateException e) {
-            System.err.println("in io.github.sinri.keel.tesuto.KeelInstantRunner.main: " + e.getMessage());
-        }
-
         testInstance.launch(args);
-
-
     }
 
     private static @Nullable String extractClassFromArgs(String[] full, String[] tail) {
@@ -75,9 +66,8 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
         return full[full.length - L - 1];
     }
 
-    @Override
-    public final Vertx getVertx() {
-        return SharedVertxStorage.get();
+    public final Keel getKeel() {
+        return Keel.shared();
     }
 
     /**
@@ -122,7 +112,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
 
         VertxOptions vertxOptions = this.buildVertxOptions();
         Vertx vertx = Vertx.builder().with(vertxOptions).build();
-        SharedVertxStorage.set(vertx);
+        Keel.share(vertx);
 
         LoggerFactory.replaceShared(this.buildLoggerFactory());
         lateLogger.set(LoggerFactory.getShared().createLogger(getClass().getName()));
@@ -150,15 +140,15 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
                                    } else {
                                        getLogger().debug("RUN SUCCESSFULLY");
                                    }
-                                   getVertx().undeploy(keelVerticleBase.deploymentID())
-                                             .onComplete(undeployResult -> {
-                                                 countDownLatch.countDown();
-                                             });
+                                   getKeel().undeploy(keelVerticleBase.deploymentID())
+                                            .onComplete(undeployResult -> {
+                                                countDownLatch.countDown();
+                                            });
                                });
 
                       return Future.succeededFuture();
                   });
-                  return verticle.deployMe(getVertx(), buildDeploymentOptions());
+                  return verticle.deployMe(getKeel(), buildDeploymentOptions());
               })
               .onSuccess(id -> {
                   getLogger().debug("Deployed verticle " + getClass().getName() + " as id: " + id);
@@ -178,7 +168,7 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
             getLogger().fatal(log -> log.message("CountDownLatch Interrupted!").exception(e));
             returnCode.set(1);
         } finally {
-            getVertx().close().onComplete(over -> {
+            getKeel().close().onComplete(over -> {
                 getLogger().debug("Closed Keel and vertx.");
                 System.exit(returnCode.get());
             });
@@ -190,7 +180,6 @@ public abstract class KeelInstantRunner implements KeelAsyncMixin {
      *
      * @return 准备完成
      */
-
     protected Future<Void> beforeRun() {
         getLogger().debug("beforeRun...");
         return Future.succeededFuture();
