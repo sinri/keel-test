@@ -2,7 +2,7 @@ plugins {
     `java-library`
     `maven-publish`
     signing
-    id("org.jreleaser") version "1.22.0"
+    id("org.jreleaser") version "1.23.0"
 }
 
 // Project metadata from gradle.properties
@@ -51,6 +51,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jspecify/jspecify
     compileOnly("org.jspecify:jspecify:$jspecifyVersion")
     testCompileOnly("org.jspecify:jspecify:$jspecifyVersion")
+
+//    api("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
+//    api("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
 
     // Test dependencies
     api("io.vertx:vertx-junit5:$vertxVersion")
