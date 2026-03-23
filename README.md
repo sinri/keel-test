@@ -121,8 +121,7 @@ db.port=3306
 
 本库是 Keel 框架生态的一部分：
 
-- [keel](https://github.com/sinri/keel) — Keel 主框架
-- [keel-base](https://github.com/sinri/keel-base) — Keel 基础库（本库的核心依赖）
+- [keel-base](https://github.com/sinri/keel-base) — Keel 基础库（本库的核心依赖）[docs](https://sinri.github.io/keel-base/)
 
 ## 许可证
 
