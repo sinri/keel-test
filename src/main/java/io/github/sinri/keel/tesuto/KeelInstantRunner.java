@@ -119,6 +119,7 @@ public abstract class KeelInstantRunner {
         this.getLogger().visibleLevel(buildVisibleLogLevel());
 
         var countDownLatch = new CountDownLatch(1);
+        AtomicInteger returnCode = new AtomicInteger(0);
 
         Future.succeededFuture()
               .compose(v -> {
@@ -136,12 +137,18 @@ public abstract class KeelInstantRunner {
                       runFuture.eventually(this::afterRun)
                                .onComplete(ar -> {
                                    if (ar.failed()) {
+                                       returnCode.set(1);
                                        getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
                                    } else {
                                        getLogger().debug("RUN SUCCESSFULLY");
                                    }
                                    getKeel().undeploy(keelVerticleBase.deploymentID())
                                             .onComplete(undeployResult -> {
+                                                if (undeployResult.failed()) {
+                                                    returnCode.set(1);
+                                                    getLogger().fatal(log -> log.message("Undeploy verticle failed")
+                                                                                .exception(undeployResult.cause()));
+                                                }
                                                 countDownLatch.countDown();
                                             });
                                });
@@ -154,21 +161,26 @@ public abstract class KeelInstantRunner {
                   getLogger().debug("Deployed verticle " + getClass().getName() + " as id: " + id);
               })
               .onFailure(t -> {
+                  returnCode.set(1);
                   getLogger().fatal(log -> log.message("Deployed verticle " + getClass().getName() + " failed")
                                               .exception(t));
                   countDownLatch.countDown();
               });
 
-        AtomicInteger returnCode = new AtomicInteger(0);
         try {
             getLogger().debug("Waiting for count down latch...");
             countDownLatch.await();
             getLogger().debug("Count down latch reached.");
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             getLogger().fatal(log -> log.message("CountDownLatch Interrupted!").exception(e));
             returnCode.set(1);
         } finally {
             getKeel().close().onComplete(over -> {
+                if (over.failed()) {
+                    returnCode.set(1);
+                    getLogger().fatal(log -> log.message("Failed to close Keel and vertx.").exception(over.cause()));
+                }
                 getLogger().debug("Closed Keel and vertx.");
                 System.exit(returnCode.get());
             });
