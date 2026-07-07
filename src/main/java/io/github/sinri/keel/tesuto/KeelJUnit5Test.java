@@ -4,6 +4,7 @@ import io.github.sinri.keel.base.async.Keel;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.json.JsonifiableSerializer;
 import io.github.sinri.keel.base.logger.factory.StdoutLoggerFactory;
+import io.github.sinri.keel.base.logger.factory.VertxLoggerDelegateFactoryWorker;
 import io.github.sinri.keel.logger.api.factory.LoggerFactory;
 import io.github.sinri.keel.logger.api.logger.Logger;
 import io.vertx.core.Vertx;
@@ -60,6 +61,7 @@ public abstract class KeelJUnit5Test {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        VertxLoggerDelegateFactoryWorker.ensureProperty();
         LoggerFactory.replaceShared(buildLoggerFactory());
         this.unitTestLogger = buildUnitTestLogger();
     }

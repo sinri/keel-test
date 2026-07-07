@@ -24,7 +24,7 @@ Keel-Test 提供两个核心抽象基类：
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.sinri:keel-test:5.0.2")
+    testImplementation("io.github.sinri:keel-test:5.0.4")
 }
 ```
 
@@ -32,7 +32,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    testImplementation 'io.github.sinri:keel-test:5.0.2'
+    testImplementation 'io.github.sinri:keel-test:5.0.4'
 }
 ```
 
@@ -42,7 +42,7 @@ dependencies {
 <dependency>
     <groupId>io.github.sinri</groupId>
     <artifactId>keel-test</artifactId>
-    <version>5.0.2</version>
+    <version>5.0.4</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -115,7 +115,7 @@ db.port=3306
 
 ## 详细文档
 
-版本详细使用文档请参阅 [docs/5.0.2/](docs/5.0.2/) 目录。
+版本详细使用文档请参阅 [docs/](docs/) 目录。
 
 ## 项目关系
 
