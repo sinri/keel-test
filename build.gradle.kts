@@ -52,9 +52,6 @@ dependencies {
     compileOnly("org.jspecify:jspecify:$jspecifyVersion")
     testCompileOnly("org.jspecify:jspecify:$jspecifyVersion")
 
-//    api("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
-//    api("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-
     // Test dependencies
     api("io.vertx:vertx-junit5:$vertxVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
