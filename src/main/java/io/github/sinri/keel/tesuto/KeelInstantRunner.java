@@ -121,10 +121,12 @@ public abstract class KeelInstantRunner {
         var countDownLatch = new CountDownLatch(1);
         AtomicInteger returnCode = new AtomicInteger(0);
 
+        // startVerticle 必须返回 run()/afterRun 的 Future，等其完成后再结束 deploy；
+        // 随后才 undeploy。若 start 立刻成功、却在 run 完成时同步 undeploy，
+        // 在 VIRTUAL_THREAD + await() 下会在部署登记进 deployment map 之前就卸部署，
+        // 触发 Unknown deployment，并把 returnCode 设成 1。
         Future.succeededFuture()
-              .compose(v -> {
-                  return this.beforeRun();
-              })
+              .compose(v -> this.beforeRun())
               .compose(v -> {
                   KeelVerticleBase verticle = KeelVerticleBase.wrap(keelVerticleBase -> {
                       Future<Void> runFuture;
@@ -133,39 +135,26 @@ public abstract class KeelInstantRunner {
                       } catch (Exception e) {
                           return Future.failedFuture(e);
                       }
-
-                      runFuture.eventually(this::afterRun)
-                               .onComplete(ar -> {
-                                   if (ar.failed()) {
-                                       returnCode.set(1);
-                                       getLogger().fatal(log -> log.message("RUN FAILED").exception(ar.cause()));
-                                   } else {
-                                       getLogger().debug("RUN SUCCESSFULLY");
-                                   }
-                                   getKeel().undeploy(keelVerticleBase.deploymentID())
-                                            .onComplete(undeployResult -> {
-                                                if (undeployResult.failed()) {
-                                                    returnCode.set(1);
-                                                    getLogger().fatal(log -> log.message("Undeploy verticle failed")
-                                                                                .exception(undeployResult.cause()));
-                                                }
-                                                countDownLatch.countDown();
-                                            });
-                               });
-
-                      return Future.succeededFuture();
+                      return runFuture.eventually(this::afterRun);
                   });
-                  return verticle.deployMe(getKeel(), buildDeploymentOptions());
-              })
-              .onSuccess(id -> {
-                  getLogger().debug("Deployed verticle " + getClass().getName() + " as id: " + id);
+                  return verticle.deployMe(getKeel(), buildDeploymentOptions())
+                                 .compose(id -> {
+                                     getLogger().debug("Deployed verticle " + getClass().getName() + " as id: " + id);
+                                     getLogger().debug("RUN SUCCESSFULLY");
+                                     return verticle.undeployMe()
+                                                    .recover(t -> {
+                                                        returnCode.set(1);
+                                                        getLogger().fatal(log -> log.message("Undeploy verticle failed")
+                                                                                    .exception(t));
+                                                        return Future.succeededFuture();
+                                                    });
+                                 });
               })
               .onFailure(t -> {
                   returnCode.set(1);
-                  getLogger().fatal(log -> log.message("Deployed verticle " + getClass().getName() + " failed")
-                                              .exception(t));
-                  countDownLatch.countDown();
-              });
+                  getLogger().fatal(log -> log.message("RUN FAILED").exception(t));
+              })
+              .onComplete(ar -> countDownLatch.countDown());
 
         try {
             getLogger().debug("Waiting for count down latch...");
